@@ -119,8 +119,8 @@ def main():
     
     all_articles = []
     # Scrape both Economy and Business sections to ensure we capture the full 2022 crisis arc
-    all_articles.extend(scrape_section("Economy", "https://economynext.com/economy/", max_pages=200))
-    all_articles.extend(scrape_section("Business", "https://economynext.com/business/", max_pages=200))
+    all_articles.extend(scrape_section("Economy", "https://economynext.com/economy/", max_pages=300))
+    all_articles.extend(scrape_section("Business", "https://economynext.com/business/", max_pages=300))
     
     df = pd.DataFrame(all_articles)
     
