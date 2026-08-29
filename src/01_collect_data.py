@@ -35,21 +35,39 @@ def extract_date_from_text(text):
                 continue
     return None
 
+def fetch_with_retry(url, max_retries=3):
+    """Fetch a URL with exponential backoff retry logic for 500/429 errors."""
+    for attempt in range(max_retries):
+        try:
+            response = requests.get(url, headers=HEADERS, timeout=15)
+            response.raise_for_status()
+            return response
+        except requests.exceptions.HTTPError as e:
+            if response.status_code in [429, 500, 502, 503, 504]:
+                wait_time = (2 ** attempt) + 2  # Exponential backoff: 3s, 6s, 10s
+                print(f"\n⚠️ Server error {response.status_code} on {url}. Retrying in {wait_time}s... (Attempt {attempt + 1}/{max_retries})")
+                time.sleep(wait_time)
+            else:
+                print(f"\n⚠️ HTTP Error {response.status_code} on {url}. Skipping.")
+                return None
+        except requests.exceptions.RequestException as e:
+            print(f"\n⚠️ Request failed on {url}: {e}. Retrying...")
+            time.sleep(3)
+    print(f"❌ Failed to fetch {url} after {max_retries} retries. Skipping.")
+    return None
+
 def scrape_economynext(max_pages=150):
-    """Scrape EconomyNext economy section with robust text-based date finding."""
+    """Scrape EconomyNext economy section with robust error handling."""
     articles = []
     base_url = "https://economynext.com/economy/"
     
-    print("\n📰 Scraping EconomyNext...")
+    print("\n📰 Scraping EconomyNext (Target: 2020-2026)...")
     for page in tqdm(range(1, max_pages + 1), desc="EconomyNext Pages"):
         url = f"{base_url}page/{page}/" if page > 1 else base_url
         
-        try:
-            response = requests.get(url, headers=HEADERS, timeout=10)
-            response.raise_for_status()
-        except requests.exceptions.RequestException as e:
-            print(f"⚠️ Failed to fetch {url}: {e}")
-            break
+        response = fetch_with_retry(url)
+        if response is None:
+            continue # Skip to next page if fetch failed
 
         soup = BeautifulSoup(response.text, 'html.parser')
         
@@ -92,66 +110,13 @@ def scrape_economynext(max_pages=150):
                         "snippet": snippet
                     })
         
-        # If we've collected a good amount and hit a page with no valid dates, we've gone back too far
-        if not page_has_valid_date and len(articles) > 100:
-            print(f"ℹ️ Reached pre-2020 content on page {page}. Stopping early to save time.")
+        # Early stopping: If we've collected a good amount and hit a page with no valid dates, 
+        # we've likely scrolled back into 2019 or earlier.
+        if not page_has_valid_date and len(articles) > 200:
+            print(f"\nℹ️ Reached pre-2020 content on page {page}. Stopping early to save time.")
             break
             
-        time.sleep(1.0) # Be respectful to the server
-        
-    return articles
-
-def scrape_dailymirror(max_pages=50):
-    """Scrape Daily Mirror Business section as a reliable secondary source."""
-    articles = []
-    base_url = "https://www.dailymirror.lk/business"
-    
-    print("\n📰 Scraping Daily Mirror Business...")
-    for page in tqdm(range(1, max_pages + 1), desc="Daily Mirror Pages"):
-        url = f"{base_url}/{page}" if page > 1 else base_url
-        
-        try:
-            response = requests.get(url, headers=HEADERS, timeout=10)
-            response.raise_for_status()
-        except requests.exceptions.RequestException as e:
-            print(f"⚠️ Failed to fetch {url}: {e}")
-            break
-
-        soup = BeautifulSoup(response.text, 'html.parser')
-        
-        # Daily Mirror business articles are typically in divs with class 'single-blog' or similar
-        posts = soup.find_all('div', class_='single-blog') or soup.find_all('article')
-        
-        if not posts:
-            print("ℹ️ No more articles found. Stopping.")
-            break
-
-        for post in posts:
-            title_tag = post.find('h3') or post.find('h2')
-            if not title_tag or not title_tag.find('a'):
-                continue
-                
-            a_tag = title_tag.find('a')
-            title = a_tag.get_text(strip=True)
-            link = a_tag['href']
-            if link and not link.startswith('http'):
-                link = "https://www.dailymirror.lk" + link
-                
-            text_content = post.get_text(separator=' ', strip=True)
-            pub_date = extract_date_from_text(text_content)
-            
-            if pub_date and START_DATE <= pub_date <= END_DATE:
-                snippet = text_content.replace(title, "").strip()[:150] + "..."
-                
-                articles.append({
-                    "source": "Daily Mirror",
-                    "title": title,
-                    "date": pub_date.strftime("%Y-%m-%d"),
-                    "url": link,
-                    "snippet": snippet
-                })
-        
-        time.sleep(1.5)
+        time.sleep(1.5) # Respectful delay between successful pages
         
     return articles
 
@@ -162,7 +127,6 @@ def main():
     
     all_articles = []
     all_articles.extend(scrape_economynext(max_pages=150))
-    all_articles.extend(scrape_dailymirror(max_pages=50))
     
     df = pd.DataFrame(all_articles)
     
