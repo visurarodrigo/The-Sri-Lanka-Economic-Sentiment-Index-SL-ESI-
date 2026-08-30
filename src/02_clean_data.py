@@ -2,10 +2,13 @@ import os
 import re
 import pandas as pd
 import numpy as np
+import os
+from pathlib import Path
 
-# Configuration
-INPUT_FILE = "../data/raw/news_headlines_raw.csv"
-OUTPUT_FILE = "../data/processed/news_headlines_clean.csv"
+# Get the project root directory (parent of src)
+PROJECT_ROOT = Path(__file__).parent.parent
+INPUT_FILE = PROJECT_ROOT / 'src' / 'data' / 'raw' / 'news_headlines_raw.csv'
+OUTPUT_FILE = PROJECT_ROOT / 'src' / 'data' / 'processed' / 'news_headlines_clean.csv'
 
 def clean_text(text):
     """Basic text cleaning for NLP pipelines."""
