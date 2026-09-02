@@ -25,6 +25,15 @@ def fetch_inflation_rate():
 
         inflation_data = []
 
+        # Manual data for 2023 because it is missing from the CBSL inflationwindow.php page
+        # Sources: CBSL Press Releases (Dec 2023, Sept 2023)
+        MISSING_2023_DATA = {
+            "2023-01": 51.7, "2023-02": 50.6, "2023-03": 50.3, "2023-04": 35.3,
+            "2023-05": 25.2, "2023-06": 12.0, "2023-07": 6.3, "2023-08": 4.0,
+            "2023-09": 1.3, "2023-10": 1.5, "2023-11": 3.4, "2023-12": 4.0
+        }
+
+
         for table in tables:
             current_year = None
             # We are looking for a table that has "Date" and "inflation" related columns
@@ -43,8 +52,8 @@ def fetch_inflation_rate():
                           'July', 'August', 'September', 'October', 'November', 'December']
 
                 if any(month in first_val for month in months) and current_year:
-                    # Extract rate from the last column (index 4 in observed tables)
-                    rate_val = str(row.iloc[-1]).strip()
+                    # Extract rate from the first data column (index 1)
+                    rate_val = str(row.iloc[1]).strip()
 
                     # Clean rate value (remove %, handle '-', etc.)
                     if rate_val == '-' or rate_val == 'nan' or not rate_val:
@@ -67,6 +76,11 @@ def fetch_inflation_rate():
                         })
 
         if inflation_data:
+            # Add missing 2023 data if not already present
+            for date_str, rate in MISSING_2023_DATA.items():
+                if not any(item['year_month'] == date_str for item in inflation_data):
+                    inflation_data.append({'year_month': date_str, 'inflation_rate': rate})
+
             df = pd.DataFrame(inflation_data)
             # Remove duplicates and sort
             df = df.drop_duplicates(subset=['year_month']).sort_values('year_month')
