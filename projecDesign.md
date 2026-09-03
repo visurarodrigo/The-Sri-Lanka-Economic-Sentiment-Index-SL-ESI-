@@ -60,7 +60,7 @@
 **Goal:** Forecast future sentiment.
 **What happens:**
 - Fit **SARIMA** and **Prophet** on `sentiment_intensity` (your tourism project already validated SARIMA's strength on Sri Lankan macro series — reuse that comparison methodology here for consistency across your portfolio).
-- Report both models' forecasts with confidence intervals; pick the better MAPE as primary, keep both for the dashboard toggle.
+- Report both models' forecasts with confidence intervals; pick the better model based on MAE/RMSE/SMAPE as primary, keep both for the dashboard toggle.
 - Backtest on held-out recent months, not just in-sample fit.
 **Files:**
 - `src/09_forecast.py`

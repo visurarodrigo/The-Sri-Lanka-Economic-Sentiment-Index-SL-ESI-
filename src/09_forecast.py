@@ -15,12 +15,17 @@ DATA_PATH = PROJECT_ROOT / 'src' / 'data' / 'processed' / 'sl_esi_merged_economi
 ARTIFACTS_DIR = PROJECT_ROOT / 'artifacts'
 FORECAST_OUTPUT = PROJECT_ROOT / 'src' / 'data' / 'processed' / 'sl_esi_forecast_results.csv'
 
-def safe_mape(y_true, y_pred):
-    """Calculate MAPE safely, avoiding division by zero."""
+def calculate_metrics(y_true, y_pred):
+    """Calculate MAE, RMSE, and SMAPE."""
     y_true, y_pred = np.array(y_true), np.array(y_pred)
-    # Avoid division by zero by adding a small epsilon
-    epsilon = 1e-10
-    return np.mean(np.abs((y_true - y_pred) / (y_true + epsilon))) * 100
+    mae = np.mean(np.abs(y_true - y_pred))
+    rmse = np.sqrt(np.mean((y_true - y_pred)**2))
+
+    # SMAPE (Symmetric Mean Absolute Percentage Error)
+    denominator = (np.abs(y_true) + np.abs(y_pred))
+    smape = 100 * np.mean(2 * np.abs(y_pred - y_true) / (denominator + 1e-10))
+
+    return {"MAE": mae, "RMSE": rmse, "SMAPE": smape}
 
 def train_and_evaluate_sarima(train_data, test_data, order=(1, 1, 1), seasonal_order=(1, 1, 1, 12)):
     """Train SARIMA model and return predictions and MAPE."""
@@ -33,10 +38,10 @@ def train_and_evaluate_sarima(train_data, test_data, order=(1, 1, 1), seasonal_o
     end = len(train_data) + len(test_data) - 1
     sarima_preds = sarima_model.predict(start=start, end=end)
     
-    mape = safe_mape(test_data, sarima_preds)
-    print(f"   SARIMA Test MAPE: {mape:.2f}%")
+    metrics = calculate_metrics(test_data, sarima_preds)
+    print(f"   SARIMA Test Metrics: MAE={metrics['MAE']:.4f}, RMSE={metrics['RMSE']:.4f}, SMAPE={metrics['SMAPE']:.2f}%")
     
-    return sarima_model, sarima_preds, mape
+    return sarima_model, sarima_preds, metrics
 
 def train_and_evaluate_prophet(train_data, test_data):
     """Train Prophet model and return predictions and MAPE."""
@@ -51,10 +56,10 @@ def train_and_evaluate_prophet(train_data, test_data):
     # Predict on test set
     prophet_preds = model.predict(test_prophet)
     
-    mape = safe_mape(test_prophet['y'], prophet_preds['yhat'])
-    print(f"   Prophet Test MAPE: {mape:.2f}%")
+    metrics = calculate_metrics(test_prophet['y'], prophet_preds['yhat'])
+    print(f"   Prophet Test Metrics: MAE={metrics['MAE']:.4f}, RMSE={metrics['RMSE']:.4f}, SMAPE={metrics['SMAPE']:.2f}%")
     
-    return model, prophet_preds['yhat'].values, mape
+    return model, prophet_preds['yhat'].values, metrics
 
 def main():
     print(" Starting Phase 6: Time Series Forecasting...")
@@ -75,12 +80,12 @@ def main():
     print(f"   Train size: {len(train_data)}, Test size: {len(test_data)}")
     
     # 3. Train and Evaluate Models
-    _, _, sarima_mape = train_and_evaluate_sarima(train_data, test_data)
-    _, _, prophet_mape = train_and_evaluate_prophet(train_data, test_data)
+    _, _, sarima_metrics = train_and_evaluate_sarima(train_data, test_data)
+    _, _, prophet_metrics = train_and_evaluate_prophet(train_data, test_data)
     
     # 4. Select Best Model
-    best_model_name = "SARIMA" if sarima_mape <= prophet_mape else "Prophet"
-    print(f"\n Best Model based on MAPE: {best_model_name}")
+    best_model_name = "SARIMA" if sarima_metrics['MAE'] <= prophet_metrics['MAE'] else "Prophet"
+    print(f"\n Best Model based on MAE: {best_model_name}")
     
     # 5. Retrain Best Model on Full Data for Final Forecast
     print(f"\n Retraining {best_model_name} on full dataset for final forecast...")
