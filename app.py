@@ -9,12 +9,12 @@ This interactive dashboard tracks the economic sentiment of Sri Lanka from 2020 
 correlating news sentiment with real-world macroeconomic indicators like tourism, 
 exchange rates, and inflation.
 
-### 🧭 Navigation
+### Navigation
 Use the sidebar to explore the different pages:
 - ** Overview**: The core SL-ESI trendline with major economic events.
 - ** Correlation Explorer**: How sentiment correlates with real economic indicators.
-- **🔮 Forecast**: Future sentiment predictions using SARIMA and Prophet.
-- **📰 Article Explorer**: Read the actual news headlines driving the sentiment.
+- ** Forecast**: Future sentiment predictions using SARIMA and Prophet.
+- ** Article Explorer**: Read the actual news headlines driving the sentiment.
 """)
 
 st.info("👈 Select a page from the sidebar to begin exploring.")
