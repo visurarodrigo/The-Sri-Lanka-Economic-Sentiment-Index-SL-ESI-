@@ -41,7 +41,7 @@ st.markdown("<br>", unsafe_allow_html=True)
 # Main Chart
 st.subheader("Economic Sentiment Intensity Over Time")
 fig = create_line_chart_with_events(df, 'year_month', 'sentiment_intensity', events,
-                                    "SL-ESI Sentiment Intensity with Key Events", "Sentiment Intensity")
+                                    "SL-ESI with Key Events", "Sentiment Intensity")
 st.plotly_chart(fig, use_container_width=True)
 
 # Event Details
