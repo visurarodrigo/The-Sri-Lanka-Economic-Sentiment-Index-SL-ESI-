@@ -1,9 +1,16 @@
 import streamlit as st
 import pandas as pd
 from pathlib import Path
+import sys
 
-st.set_page_config(page_title="Article Explorer", page_icon="", layout="wide")
-st.title(" Article Explorer")
+sys.path.append(str(Path(__file__).resolve().parent.parent))
+from utils.ui_helpers import apply_custom_css, page_header, page_footer
+
+st.set_page_config(page_title="Article Explorer", page_icon="📰", layout="wide")
+
+# Apply Modern UI styling
+apply_custom_css()
+page_header("Article Explorer", "📰")
 
 ROOT = Path(__file__).resolve().parent.parent
 RAW_PATH = ROOT / 'src' / 'data' / 'raw'
@@ -27,7 +34,7 @@ search_term = st.sidebar.text_input("🔎 Search Headlines/Snippets", "")
 
 # Apply Filters
 filtered_df = df[
-    (df['year'].isin(selected_year)) & 
+    (df['year'].isin(selected_year)) &
     (df['month'].isin(selected_month))
 ]
 
@@ -45,3 +52,5 @@ for _, row in filtered_df.iterrows():
         st.write(f"**Source:** {row['source']}")
         st.write(f"**Snippet:** {row['snippet']}")
         st.markdown(f"[Read Full Article]({row['url']})")
+
+page_footer()

@@ -5,9 +5,13 @@ import sys
 
 sys.path.append(str(Path(__file__).resolve().parent.parent))
 from utils.plotting import create_scatter_plot
+from utils.ui_helpers import apply_custom_css, page_header, page_footer
 
 st.set_page_config(page_title="Correlations", page_icon="🔗", layout="wide")
-st.title("Correlation Explorer")
+
+# Apply Modern UI styling
+apply_custom_css()
+page_header("Correlation Explorer", "🔗")
 
 ROOT = Path(__file__).resolve().parent.parent
 DATA_PATH = ROOT / 'src' / 'data' / 'processed'
@@ -28,9 +32,10 @@ fig = create_scatter_plot(df, 'sentiment_intensity', indicator, title=f"Sentimen
 st.plotly_chart(fig, use_container_width=True)
 
 # Lag Correlation Table
-st.subheader(" Lag Correlation Analysis")
+st.markdown("<br>", unsafe_allow_html=True)
+st.subheader("Lag Correlation Analysis")
 st.markdown("""
-This table shows the correlation between sentiment and economic indicators at different time lags. 
+This table shows the correlation between sentiment and economic indicators at different time lags.
 - **Positive Lag**: Sentiment *leads* the economic indicator (predictive power).
 - **Negative Lag**: Sentiment *lags* behind the economic indicator (reactive).
 """)
@@ -44,3 +49,5 @@ st.dataframe(filtered_corr, use_container_width=True, hide_index=True)
 # Highlight best lag
 best_row = filtered_corr.loc[filtered_corr['pearson_corr'].abs().idxmax()]
 st.success(f"**Strongest Correlation:** {best_row['pearson_corr']:.3f} at Lag {int(best_row['lag_months'])} ({best_row['direction']})")
+
+page_footer()

@@ -7,9 +7,13 @@ import sys
 # Add parent directory to path to import utils
 sys.path.append(str(Path(__file__).resolve().parent.parent))
 from utils.plotting import create_line_chart_with_events
+from utils.ui_helpers import apply_custom_css, page_header, page_footer
 
 st.set_page_config(page_title="Overview", page_icon="📊", layout="wide")
-st.title(" SL-ESI Overview: The Crisis & Recovery Arc")
+
+# Apply Modern UI styling
+apply_custom_css()
+page_header("SL-ESI Overview: The Crisis & Recovery Arc", "📊")
 
 # Paths
 ROOT = Path(__file__).resolve().parent.parent
@@ -32,14 +36,17 @@ col2.metric("Latest Exchange Rate", f"Rs. {df['usd_lkr_rate'].iloc[-1]:.2f}")
 col3.metric("Latest Inflation", f"{df['inflation_rate'].iloc[-1]:.2f}%")
 col4.metric("Latest Tourists", f"{int(df['tourist_arrivals'].iloc[-1]):,}")
 
-st.markdown("---")
+st.markdown("<br>", unsafe_allow_html=True)
 
 # Main Chart
 st.subheader("Economic Sentiment Intensity Over Time")
-fig = create_line_chart_with_events(df, 'year_month', 'sentiment_intensity', events, 
+fig = create_line_chart_with_events(df, 'year_month', 'sentiment_intensity', events,
                                     "SL-ESI Sentiment Intensity with Key Events", "Sentiment Intensity")
 st.plotly_chart(fig, use_container_width=True)
 
 # Event Details
-st.subheader(" Key Economic & Political Events")
+st.markdown("<br>", unsafe_allow_html=True)
+st.subheader("Key Economic & Political Events")
 st.dataframe(events[['date', 'label', 'category', 'description']], use_container_width=True, hide_index=True)
+
+page_footer()
