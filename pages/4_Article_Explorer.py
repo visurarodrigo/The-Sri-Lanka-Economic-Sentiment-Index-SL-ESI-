@@ -44,13 +44,30 @@ if search_term:
     filtered_df = filtered_df[mask]
 
 # Display Stats
-st.markdown(f"### Showing **{len(filtered_df)}** articles")
+total_articles = len(filtered_df)
+st.markdown(f"### Found **{total_articles}** articles")
 
-# Display Articles
-for _, row in filtered_df.iterrows():
-    with st.expander(f"{row['title']} ({row['date'].strftime('%Y-%m-%d')})"):
-        st.write(f"**Source:** {row['source']}")
-        st.write(f"**Snippet:** {row['snippet']}")
-        st.markdown(f"[Read Full Article]({row['url']})")
+if total_articles == 0:
+    st.warning("No articles found matching your criteria.")
+else:
+    # Pagination
+    articles_per_page = 20
+    num_pages = (total_articles // articles_per_page) + (1 if total_articles % articles_per_page > 0 else 0)
+
+    if num_pages > 1:
+        page = st.number_input("Page", min_value=1, max_value=num_pages, value=1)
+        start_idx = (page - 1) * articles_per_page
+        end_idx = start_idx + articles_per_page
+        display_df = filtered_df.iloc[start_idx:end_idx]
+        st.markdown(f"Showing articles {start_idx + 1} to {min(end_idx, total_articles)} of {total_articles}")
+    else:
+        display_df = filtered_df
+
+    # Display Articles
+    for _, row in display_df.iterrows():
+        with st.expander(f"{row['title']} ({row['date'].strftime('%Y-%m-%d')})"):
+            st.write(f"**Source:** {row['source']}")
+            st.write(f"**Snippet:** {row['snippet']}")
+            st.markdown(f"[Read Full Article]({row['url']})")
 
 page_footer()
