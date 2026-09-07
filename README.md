@@ -66,6 +66,9 @@ To predict future sentiment trends, I compared two industry-standard models:
 - **SARIMA:** Captures seasonality and auto-regressive trends.
 - **Prophet:** Robust to outliers and handles non-linear growth.
 
+## 📑 Technical Documentation
+For a deep dive into the methodology, statistical validation, and detailed analysis of the findings, please refer to the [Comprehensive Technical Report](report.md).
+
 ---
 
 ## 🔑 Key Findings
